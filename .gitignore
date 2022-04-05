@@ -138,3 +138,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+!/restaurants-test-309912-e8008f01ac93.json
