@@ -29,130 +29,14 @@ from aiogram.types import ChatActions
 from config import admins, broadcaster_queue
 import validators
 from logging_middleware import LoggingMiddleware
-
-
-bot = Bot(config.BOT_TOKEN_ADMIN)
-storage = MemoryStorage()  # внутреннее хранилище бота, позволяющее отслеживать FMS (Finite State Maschine)
-dp = Dispatcher(bot, storage=storage)
-dp.middleware.setup(LoggingMiddleware())
-
-logging.basicConfig(
-    filename=config.LOG_FILE,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
-log = logging.getLogger('bot_admin')
-
-message_ids = {}
+from states_admin import *
+from bot_admin_setup import bot, dp
+from middlewares.answercallback_middleware import set_message_id
+from helpers import is_phone_valid, safe_for_markdown
 
 remember_this_message = {}
 
-flags = {}
 
-excluded_from_middleware = ['PREV-YEAR_', 'NEXT-YEAR_', 'PREV-MONTH_', 'NEXT-MONTH_', 'settings',
-                            'yes_interrupt', 'no_interrupt', 'new_booking', 'presence_yes_', 'presence_maybe_',
-                            'presence_no', 'restore_order']
-
-class MiddlewareAnswerCallback(BaseMiddleware):
-    async def on_pre_process_callback_query(self, callback_query: types.CallbackQuery, data: dict):
-        if callback_query.data == ' ':
-            await callback_query.answer(msgs.not_active)
-        if not any([i in callback_query.data for i in excluded_from_middleware]):
-            if callback_query.message.message_id != message_ids.get(callback_query.message.chat.id):
-                await callback_query.answer(msgs.alert, show_alert=True)
-        await callback_query.answer()
-
-
-dp.middleware.setup(MiddlewareAnswerCallback())
-
-class AddTag(StatesGroup):
-    name = State()
-
-
-class DelTag(StatesGroup):
-    name = State()
-    confirmation = State()
-
-
-class Broadcast(StatesGroup):
-    text = State()
-    next_step = State()
-    attachment = State()
-    attachment2 = State()
-    conf_ = State()
-    tags = State()
-    confirmation = State()
-
-
-class BroadcastHistoryStates(StatesGroup):
-    tags = State()
-    id = State()
-    wait = State()
-
-
-class Booking(StatesGroup):
-    restaurant = State()
-    how_many = State()
-    date_booking = State()
-    approximate_time = State()
-    exact_time = State()
-    table = State()
-    confirmation = State()
-    name = State()
-    phone = State()
-    final = State()
-    remind = State()
-
-class DelBooking(StatesGroup):
-    id = State()
-    confirmation = State()
-
-phone_regex = '^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$'
-
-async def is_phone_valid(text):
-    text = text.strip()
-    try:
-        phone = phonenumbers.parse(text)
-        if phonenumbers.is_possible_number(phone) and phonenumbers.is_valid_number(phone):
-            return text
-
-    except:
-        pattern = re.compile(phone_regex)
-        phone = pattern.search(text)
-        if phone and phone.string == text:
-            return text
-    return None
-
-
-async def safe_for_markdown(text):
-
-    excluded = ['.', ':', '-', '~', '!', '+']
-    # excluded2 = ['(', ')']
-    flag = False
-    l = len(text)
-    text_new = ''
-    for i in range(l):
-        if text[i] in excluded and text[i-1] != '\\':
-            text_new += fr'\{text[i]}'
-        elif text[i] == '(':
-            if text[i-1] != ']' and text[i-1] != '\\':
-                text_new += fr'\{text[i]}'
-                flag = True
-            else:
-                text_new += text[i]
-        elif text[i] == ')':
-            if flag and text[i-1] != '\\':
-                text_new += fr'\{text[i]}'
-                flag = False
-            else:
-                text_new += text[i]
-
-        else:
-            text_new += text[i]
-    if '#' in text_new:
-        text_new = text_new.replace('\\\\\\', '\\')
-
-    return text_new
 
 russian_months = {1: 'Янв', 2: 'Февр', 3: 'Март', 4: 'Апр', 5: 'Май', 6: 'Июнь', 7: 'Июль', 8: 'Авг', 9: 'Сент',
                   10: 'Окт', 11: 'Нояб', 12: 'Дек'}
@@ -307,7 +191,6 @@ async def next_month(query: CallbackQuery, state: FSMContext):
 @dp.message_handler(text=buttons.back, state=Broadcast.text)
 async def back_to_admin_menu(message: types.Message, state: FSMContext):
     await state.finish()
-    flags[message.chat.id] = False
     await start(message, state)
 
 
@@ -315,7 +198,6 @@ async def back_to_admin_menu(message: types.Message, state: FSMContext):
 async def back_to_broadcast_text(message: types.Message, state: FSMContext):
     await Broadcast.tags.set()
     await state.update_data(tags=[])
-    flags[message.chat.id] = False
     await broadcast_menu(message, state)
 
 
@@ -454,7 +336,7 @@ async def back_to_confirmation3(message: types.Message, state: FSMContext):
 
 @dp.message_handler(text=buttons.back)
 async def back_to_admin_menu2(message: types.Message):
-    message_ids[message.chat.id] = message.message_id
+    await set_message_id(message)
     await start(message, None)
 
 
@@ -524,13 +406,11 @@ async def new_booking(message: types.Message, state: FSMContext, back_flag=False
     #     msg_text = msgs.start_message.format(await msgs.get_times_of_day(datetime.datetime.now(tz=config.timezone).hour)
     #                                          )
     msg_id = await message.answer(msg_text, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains=['restaurant_'], state=Booking.restaurant)
 async def chosen_restaurant(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     restaurant_number = int(query.data.split('_')[1])
     keyboard = InlineKeyboardMarkup()
     buttons_rows = [InlineKeyboardButton(str(i), callback_data=f'how_many_{i}') for i in range(1, 7)]
@@ -576,13 +456,11 @@ async def chosen_restaurant(query: CallbackQuery, state: FSMContext):
     await set_keyboard_booking(query.message, msg_text)
 
     msg_id = await query.message.answer(msgs.how_many, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains=['how_many_'], state=Booking.how_many)
 async def chosen_how_many(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     how_many = int(query.data.split('_')[2])
     await state.update_data(how_many=how_many)
     await Booking.next()
@@ -623,7 +501,7 @@ async def chosen_how_many(query: CallbackQuery, state: FSMContext):
     # await ChatActions.typing(0.1)
     # await asyncio.sleep(0.1)
     msg_id = await query.message.answer(msgs.choose_date, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def rechose_how_many(message: types.Message, state: FSMContext):
@@ -651,13 +529,11 @@ async def rechose_how_many(message: types.Message, state: FSMContext):
     await state.update_data(restaurant=restaurant_number)
     await message.answer(msg_text, parse_mode=types.ParseMode.MARKDOWN_V2)
     msg_id = await message.answer(msgs.how_many, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='bigger_number', state=Booking.how_many)
 async def bigger_number(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await state.update_data(how_many='bigger_number')
     keyboard = InlineKeyboardMarkup()
     buttons_rows = []
@@ -674,12 +550,10 @@ async def bigger_number(query: CallbackQuery, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.back_to_menu2, callback_data='back_to_menu2'))
     msg_id = await query.message.answer(
         msgs.for_bigger_number.format(config.PHONES[(await state.get_data()).get('restaurant')]), reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 @dp.callback_query_handler(text='back_to_menu2', state=Booking.how_many)
 async def back_to_menu2(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await state.finish()
     await set_keyboard_admin(query.message, msgs.main_menu)
 
@@ -702,13 +576,11 @@ async def rechose_date_booking(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.later, callback_data=f'date_booking_later'))
 
     msg_id = await message.answer(msgs.choose_date, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains=['date_booking_'], state=Booking.date_booking)
 async def chosen_date_booking(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     date_booking = query.data.split('_')[2]
     if date_booking == 'later':
         await date_booking_later(query, state)
@@ -824,19 +696,17 @@ async def chosen_date_booking(query: CallbackQuery, state: FSMContext):
     keyboard.row(*second_row)
     msg_id = await query.message.answer(await safe_for_markdown(msgs.approximate_time),
                                         parse_mode=types.ParseMode.MARKDOWN_V2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='date_booking_later', state=Booking.date_booking)
 async def date_booking_later(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await state.update_data(date_booking='later')
     now = datetime.datetime.now(tz=config.timezone)
     keyboard = await generate_calendar(now.year, now.month, now.day, now, config.DAYS_FOR_BOOKING, delete_empty=True)
     await query.message.edit_reply_markup(keyboard)
     # msg_id = await query.message.answer(msgs.choose_date, reply_markup=keyboard)
-    # message_ids[msg_id.chat.id] = msg_id.message_id
+    # await set_message_id(msg_id
 
 
 async def reformat_times(time_available, times):
@@ -849,8 +719,6 @@ async def reformat_times(time_available, times):
 
 @dp.callback_query_handler(text_contains=['approximate_time_'], state=Booking.approximate_time)
 async def chosen_approximate_time(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     approximate_time = query.data.split('_')[2]
     if approximate_time == 'pass':
         return
@@ -918,7 +786,7 @@ async def chosen_approximate_time(query: CallbackQuery, state: FSMContext):
         keyboard.row(*row)
     msg_id = await query.message.answer(await safe_for_markdown(msgs.exact_time),
                                         parse_mode=types.ParseMode.MARKDOWN_V2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def rechose_approximate_time(message: types.Message, state: FSMContext):
@@ -980,13 +848,11 @@ async def rechose_approximate_time(message: types.Message, state: FSMContext):
     keyboard.row(*second_row)
     msg_id = await message.answer(await safe_for_markdown(msgs.approximate_time),
                                   parse_mode=types.ParseMode.MARKDOWN_V2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains=['exact_time_'], state=Booking.exact_time)
 async def chosen_exact_time(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     exact_time = query.data.split('_')[2]
     if exact_time == ' ':
         return
@@ -1052,7 +918,7 @@ async def chosen_exact_time(query: CallbackQuery, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.yes2, callback_data='choose_table_yes'),
                  InlineKeyboardButton(buttons.no2, callback_data='choose_table_no'))
     msg_id = await query.message.answer(msgs.want_choose_table, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def rechose_exact_time(message: types.Message, state: FSMContext):
@@ -1088,7 +954,7 @@ async def rechose_exact_time(message: types.Message, state: FSMContext):
         keyboard.row(*row)
     msg_id = await message.answer(await safe_for_markdown(msgs.exact_time), parse_mode=types.ParseMode.MARKDOWN_V2,
                                   reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def rechoose_table_yes_no(message: types.Message, state: FSMContext):
@@ -1096,64 +962,24 @@ async def rechoose_table_yes_no(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.yes2, callback_data='choose_table_yes'),
                  InlineKeyboardButton(buttons.no2, callback_data='choose_table_no'))
     msg_id = await message.answer(msgs.want_choose_table, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text=['choose_table_yes'], state=Booking.table)
 async def choose_table_yes(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
-    # keyboard = InlineKeyboardMarkup()
-    # keyboard.add(InlineKeyboardButton(buttons.check_mark + buttons.yes, callback_data='choose_table_yes'),
-    #              InlineKeyboardButton(buttons.no, callback_data='choose_table_no'))
-    # await query.message.edit_reply_markup(keyboard)
+
     restaurant_number = (await state.get_data()).get('restaurant')
     how_many = (await state.get_data()).get('how_many')
     date_booking = (await state.get_data()).get('date_booking')
     exact_time = (await state.get_data()).get('exact_time')
-    # tables = await get_available_tables(restaurant_number, how_many, date_booking, exact_time)
     tables = await get_available_tables_with_people(restaurant_number, how_many, date_booking, exact_time)
-    # min_people_tables = min([i[2] for i in tables])
-    # tables = [i for i in tables if i[2] == min_people_tables]
+
     if len(tables) == 0:
         await query.message.answer(msgs.all_tables_busy)
         return
-    # keyboard = InlineKeyboardMarkup(row_width=5)
-    # media = types.MediaGroup()
+
     colored_images = await get_colored_image(restaurant_number, [i[1] for i in tables], config.PATH_TO_SAVE, True)
 
-    # for i in colored_images:
-    #     media.attach_photo(open(i, 'rb'))
-
-    # if len(tables) % 5 == 0:
-    #     for i in tables:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    # else:
-    #     for i in tables[:5 * (len(tables) // 5)]:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    #     if len(tables[5 * (len(tables) // 5):]) == 1:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 3:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-3][1], callback_data=f'table_{tables[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 2:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 4:
-    #         keyboard.insert(InlineKeyboardButton(tables[-4][1], callback_data=f'table_{tables[-4][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-3][1], callback_data=f'table_{tables[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-            # keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
     await state.update_data(table='choosing')
     keyboard = InlineKeyboardMarkup()
     if len(colored_images) > 1:
@@ -1166,29 +992,19 @@ async def choose_table_yes(query: CallbackQuery, state: FSMContext):
     else:
         msg_id = await bot.send_photo(query.message.chat.id, colored_images[0][0], msgs.chose_table,
                                       reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    # await bot.send_media_group(query.message.chat.id, media)
-    # msg_id = await query.message.answer(msgs.chose_table, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+        await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text=['choose_table_no'], state=Booking.table)
 async def choose_table_no(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await state.update_data(table=msgs.not_important)
     await Booking.next()
-    # keyboard = InlineKeyboardMarkup()
-    # keyboard.add(InlineKeyboardButton(buttons.yes, callback_data='choose_table_yes'),
-    #              InlineKeyboardButton(buttons.check_mark + buttons.no, callback_data='choose_table_no'))
-    # await query.message.edit_reply_markup(keyboard)
-    # await ChatActions.typing(0.1)
-    # await asyncio.sleep(0.1)
+
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(buttons.confirm, callback_data='confirm'),
                  InlineKeyboardButton(buttons.wrong, callback_data='new_booking'))
 
     async with state.proxy() as data:
-        # people = msgs.people_many if int(data['how_many']) > 1 else msgs.people_one
         if data['table'] == msgs.not_important:
             msg_text = msgs.information_about2.format(msgs.restaurants[int(data['restaurant'])],
                                                       data['date_booking'] + ' ' +
@@ -1205,13 +1021,11 @@ async def choose_table_no(query: CallbackQuery, state: FSMContext):
             await safe_for_markdown(msg_text), reply_markup=keyboard,
             parse_mode=types.ParseMode.MARKDOWN_V2)
 
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains=['tableimage_'], state=Booking.table)
 async def tableimage_(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     image_number = int(query.data.split('_')[1])
     restaurant_number = (await state.get_data()).get('restaurant')
     how_many = (await state.get_data()).get('how_many')
@@ -1248,8 +1062,7 @@ async def tableimage_(query: CallbackQuery, state: FSMContext):
 # @dp.callback_query_handler(text_contains=['table_'], state=Booking.table)
 @dp.message_handler(state=Booking.table)
 async def chosen_tables(message: types.Message, state: FSMContext):
-    # if query.message.message_id != message_ids.get(query.message.chat.id):
-    #     return
+
     table = message.text.strip()
     if not table.isdigit():
         await message.answer(msgs.only_digits_tables)
@@ -1259,9 +1072,7 @@ async def chosen_tables(message: types.Message, state: FSMContext):
     how_many = (await state.get_data()).get('how_many')
     date_booking = (await state.get_data()).get('date_booking')
     exact_time = (await state.get_data()).get('exact_time')
-    # tables = await get_available_tables(restaurant_number, how_many, date_booking, exact_time)
     tables = await get_available_tables_with_people(restaurant_number, how_many, date_booking, exact_time)
-    # table = int(query.data.split('_')[1])
     if len(tables) == 0:
         await message.answer(msgs.all_tables_busy)
         return
@@ -1273,60 +1084,12 @@ async def chosen_tables(message: types.Message, state: FSMContext):
         return
     await Booking.next()
     await state.update_data(table=tables[table_now][::])
-    # min_people_tables = min([i[2] for i in tables])
-    # tables = [i for i in tables if i[2] == min_people_tables]
 
-    # tables_ = []
-    # for i in tables:
-    #     if i[0] == table:
-    #         a = i
-    #         i[1] = buttons.check_mark + str(i[1])
-    #         tables_.append(i)
-    #     else:
-    #         tables_.append(i)
-    # keyboard = InlineKeyboardMarkup(row_width=5)
-    # for i in tables_:
-    #     keyboard.insert(InlineKeyboardButton(i, callback_data=f'table_{i}'))
-    # if len(tables_) % 5 == 0:
-    #     for i in tables_:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    # else:
-    #     for i in tables_[:5 * (len(tables_) // 5)]:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    #     if len(tables_[5 * (len(tables_) // 5):]) == 1:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-1][1], callback_data=f'table_{tables_[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables_[5 * (len(tables_) // 5):]) == 3:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-3][1], callback_data=f'table_{tables_[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-2][1], callback_data=f'table_{tables_[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-1][1], callback_data=f'table_{tables_[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables_[5 * (len(tables_) // 5):]) == 2:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-2][1], callback_data=f'table_{tables_[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-1][1], callback_data=f'table_{tables_[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         # keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables_[5 * (len(tables_) // 5):]) == 4:
-    #         keyboard.insert(InlineKeyboardButton(tables_[-4][1], callback_data=f'table_{tables_[-4][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-3][1], callback_data=f'table_{tables_[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-2][1], callback_data=f'table_{tables_[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables_[-1][1], callback_data=f'table_{tables_[-1][0]}'))
-    #         # keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #
-    # await query.message.edit_reply_markup(keyboard)
-    # await ChatActions.typing(0.1)
-    # await asyncio.sleep(0.1)
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(buttons.confirm, callback_data='confirm'),
                  InlineKeyboardButton(buttons.wrong, callback_data='new_booking'))
 
     async with state.proxy() as data:
-        # people = msgs.people_many if int(data['how_many']) > 1 else msgs.people_one
         if data['table'] == msgs.not_important:
             msg_text = msgs.information_about2.format(msgs.restaurants[int(data['restaurant'])],
                                                       data['date_booking'] + ' ' +
@@ -1343,7 +1106,7 @@ async def chosen_tables(message: types.Message, state: FSMContext):
         await safe_for_markdown(msg_text), reply_markup=keyboard,
         parse_mode=types.ParseMode.MARKDOWN_V2)
 
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def rechose_table(message: types.Message, state: FSMContext):
@@ -1352,49 +1115,13 @@ async def rechose_table(message: types.Message, state: FSMContext):
     date_booking = (await state.get_data()).get('date_booking')
     exact_time = (await state.get_data()).get('exact_time')
     tables = await get_available_tables_with_people(restaurant_number, how_many, date_booking, exact_time)
-    # min_people_tables = min([i[2] for i in tables])
-    # tables = [i for i in tables if i[2] == min_people_tables]
+
     if len(tables) == 0:
         await message.answer(msgs.all_tables_busy)
         return
     keyboard = InlineKeyboardMarkup(row_width=5)
     media = types.MediaGroup()
     colored_images = await get_colored_image(restaurant_number, [i[1] for i in tables], config.PATH_TO_SAVE, True)
-    # for i in colored_images:
-    #     media.attach_photo(open(i, 'rb'))
-
-    # for i in tables:
-    #     keyboard.insert(InlineKeyboardButton(i, callback_data='table_{i}'))
-    # if len(tables) % 5 == 0:
-    #     for i in tables:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    # else:
-    #     for i in tables[:5 * (len(tables) // 5)]:
-    #         keyboard.insert(InlineKeyboardButton(i[1], callback_data=f'table_{i[0]}'))
-    #     if len(tables[5 * (len(tables) // 5):]) == 1:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 3:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-3][1], callback_data=f'table_{tables[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 2:
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-    #     elif len(tables[5 * (len(tables) // 5):]) == 4:
-    #         keyboard.insert(InlineKeyboardButton(tables[-4][1], callback_data=f'table_{tables[-4][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-3][1], callback_data=f'table_{tables[-3][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-2][1], callback_data=f'table_{tables[-2][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(tables[-1][1], callback_data=f'table_{tables[-1][0]}'))
-    #         keyboard.insert(InlineKeyboardButton(' ', callback_data=' '))
-
     keyboard = InlineKeyboardMarkup()
     if len(colored_images) > 1:
         keyboard.add(InlineKeyboardButton(' ', callback_data=' '),
@@ -1406,13 +1133,11 @@ async def rechose_table(message: types.Message, state: FSMContext):
     else:
         msg_id = await bot.send_photo(message.chat.id, colored_images[0][0], msgs.chose_table,
                                       reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='confirm', state=Booking.confirmation)
 async def confirm(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     date = (await state.get_data()).get('date_booking')
     exact_time = (await state.get_data()).get('exact_time')
     now = datetime.datetime.now(tz=config.timezone)
@@ -1428,7 +1153,6 @@ async def confirm(query: CallbackQuery, state: FSMContext):
         await query.message.answer(msgs.wrong_exact_time.format(15 * config.BOOK_IN_ADVANCE))
         await rechose_exact_time(query.message, state)
         return
-    # elif now.strftime('%d.%m') > (await state.get_data()).get('date_booking'):
     elif now.strftime('%m.%d') > '.'.join([(await state.get_data()).get('date_booking').split('.')[1],
                                            (await state.get_data()).get('date_booking').split('.')[0]]):
         await Booking.date_booking.set()
@@ -1448,22 +1172,7 @@ async def confirm(query: CallbackQuery, state: FSMContext):
             return
     await Booking.next()
     await register2(query, state)
-    # user = await User.get_or_none(chat_id=query.message.chat.id)
-    # if not user or user.name is None or user.phone is None:
-    #     await Booking.next()
-    #
-    #     # msg_id = await query.message.answer(msgs.not_registred_name)
-    #     await register2(query, state)
-    # else:
-    #     await state.update_data(name=user.name)
-    #     await state.update_data(phone=user.phone)
-    #     await Booking.final.set()
-    #     keyboard = InlineKeyboardMarkup()
-    #     keyboard.add(InlineKeyboardButton(buttons.yes2, callback_data='final_confirm'),
-    #                  InlineKeyboardButton(buttons.no2, callback_data='wrong_final_confirm'))
-    #     msg_id = await query.message.answer(await safe_for_markdown(msgs.personal_data.format(user.name, user.phone)),
-    #                                         reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    #     message_ids[msg_id.chat.id] = msg_id.message_id
+
 
 
 async def rechose_confirm(message: types.Message, state: FSMContext):
@@ -1487,14 +1196,12 @@ async def rechose_confirm(message: types.Message, state: FSMContext):
         msg_id = await message.answer(
             await safe_for_markdown(msg_text), reply_markup=keyboard,
             parse_mode=types.ParseMode.MARKDOWN_V2)
-        message_ids[msg_id.chat.id] = msg_id.message_id
+        await set_message_id(msg_id)
 
 
 
 @dp.callback_query_handler(text='register', state=Booking.name)
 async def register(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await query.message.answer(msgs.enter_name)
 
 
@@ -1511,10 +1218,7 @@ async def name_handler(message: types.Message, state: FSMContext):
 
 
 async def rechose_name(message: types.Message, state: FSMContext):
-    # keyboard = InlineKeyboardMarkup()
-    # keyboard.add(InlineKeyboardButton(buttons.register, callback_data='register'))
-    # msg_id = await message.answer(msgs.not_registred_name, reply_markup=keyboard)
-    # message_ids[msg_id.chat.id] = msg_id.message_id
+
     await message.answer(msgs.enter_name)
 
 
@@ -1534,47 +1238,12 @@ async def phone_handler(message: types.Message, state: FSMContext):
         msg_id = await message.answer(
             await safe_for_markdown(msgs.personal_data2.format(data.get('name'), data.get('phone'))),
             reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
-    # try:
-    #     phone = phonenumbers.parse(text)
-    #     if phonenumbers.is_possible_number(phone) and phonenumbers.is_valid_number(phone):
-    #         await state.update_data(phone=text)
-    #         await Booking.next()
-    #         keyboard = InlineKeyboardMarkup()
-    #         keyboard.add(InlineKeyboardButton(buttons.yes2, callback_data='final_confirm'),
-    #                      InlineKeyboardButton(buttons.no2, callback_data='wrong_final_confirm'))
-    #         async with state.proxy() as data:
-    #             msg_id = await message.answer(
-    #                 await safe_for_markdown(msgs.personal_data2.format(data.get('name'), data.get('phone'))),
-    #                 reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    #         message_ids[msg_id.chat.id] = msg_id.message_id
-    #
-    #     else:
-    #         await message.answer(msgs.phone_is_wrong)
-    # except:
-    #     pattern = re.compile(phone_regex)
-    #     phone = pattern.search(text)
-    #     if phone and phone.string == text:
-    #         await state.update_data(phone=text)
-    #         await Booking.next()
-    #         keyboard = InlineKeyboardMarkup()
-    #         keyboard.add(InlineKeyboardButton(buttons.yes2, callback_data='final_confirm'),
-    #                      InlineKeyboardButton(buttons.no2, callback_data='wrong_final_confirm'))
-    #         async with state.proxy() as data:
-    #             msg_id = await message.answer(
-    #                 await safe_for_markdown(msgs.personal_data2.format(data.get('name'), data.get('phone'))),
-    #                 reply_markup=keyboard, parse_mode=types.ParseMode.MARKDOWN_V2)
-    #         message_ids[msg_id.chat.id] = msg_id.message_id
-    #
-    #     else:
-    #         await message.answer(msgs.phone_is_wrong)
 
 
 @dp.callback_query_handler(text='final_confirm', state=Booking.final)
 async def final_confirm(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     keyboard = InlineKeyboardMarkup()
     await Booking.next()
     date = (await state.get_data()).get('date_booking')
@@ -1614,47 +1283,10 @@ async def final_confirm(query: CallbackQuery, state: FSMContext):
             return
     time_book = datetime.datetime.strptime(f'{date}.{now.year} {time}', '%d.%m.%Y %H:%M')
     await remind_handler_2(query, state, None)
-    #
-    # now = now.replace(tzinfo=None)
-    # time_plus_2 = now + datetime.timedelta(hours=2)
-    # time_plus_6 = now + datetime.timedelta(hours=6)
-    # time_plus_12 = now + datetime.timedelta(hours=12)
-    # time_plus_24 = now + datetime.timedelta(hours=24)
-    # remind_buttons = [[24, 'За 24 часа'], [12, 'За 12 часов'], [6, 'За 6 часов'], [2, 'За 2 часа'],
-    #                   ['no', 'Не напоминать']]
-    #
-    # if not (time_book > time_plus_24):
-    #     remind_buttons[0][0] = 'none'
-    #     remind_buttons[0][1] = ''
-    # if not (time_book > time_plus_12):
-    #     remind_buttons[1][0] = 'none'
-    #     remind_buttons[1][1] = ''
-    # if not (time_book > time_plus_6):
-    #     remind_buttons[2][0] = 'none'
-    #     remind_buttons[2][1] = ''
-    # if not (time_book > time_plus_2):
-    #     remind_buttons[3][0] = 'none'
-    #     remind_buttons[3][1] = ''
-    #
-    # flag = True
-    # for i in remind_buttons[:4]:
-    #     if i[1] != '':
-    #         flag = False
-    # if not flag:
-    #     keyboard.add(InlineKeyboardButton(remind_buttons[0][1], callback_data=f'remind_{remind_buttons[0][0]}'),
-    #                  InlineKeyboardButton(remind_buttons[1][1], callback_data=f'remind_{remind_buttons[1][0]}'))
-    #     keyboard.add(InlineKeyboardButton(remind_buttons[2][1], callback_data=f'remind_{remind_buttons[2][0]}'),
-    #                  InlineKeyboardButton(remind_buttons[3][1], callback_data=f'remind_{remind_buttons[3][0]}'))
-    #     keyboard.add(InlineKeyboardButton(remind_buttons[4][1], callback_data=f'remind_{remind_buttons[4][0]}'))
-    #     msg_id = await query.message.answer(msgs.remind, reply_markup=keyboard)
-    #     message_ids[msg_id.chat.id] = msg_id.message_id
-    # else:
 
 
 @dp.callback_query_handler(text_contains=['remind_'], state=Booking.remind)
 async def remind_handler(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     remind = query.data.split('_')[1]
     if not remind.isdigit():
         if remind == 'none':
@@ -1837,8 +1469,6 @@ async def remind_handler_2(query: CallbackQuery, state: FSMContext, remind):
 
 @dp.callback_query_handler(text='wrong_final_confirm', state=Booking.final)
 async def wrong_final_confirm(query: CallbackQuery, state: FSMContext):
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await Booking.name.set()
     await register(query, state)
 
@@ -1866,7 +1496,7 @@ async def del_handler(message: types.Message, state: FSMContext):
                                                     (await order.user).name, (await order.user).phone, order.date+' '+order.time, order.how_many,  msgs.guests[order.how_many],
                                                     order.table_range, f'{order.table_joint_range} в общих' if order.table_joint_range else '')
     msg_id = await message.answer(msg_text, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains='del_booking_', state=DelBooking.confirmation)
@@ -1977,7 +1607,7 @@ async def admin_menu(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.broadcast, callback_data='broadcast'),
                  InlineKeyboardButton(buttons.tags, callback_data='admin_tags'))
     msg_id = await message.answer(msgs.admin_menu, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='admin_tags')
@@ -1985,8 +1615,6 @@ async def admin_menu(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text='admin_tags', state=DelTag.name)
 async def admin_tags(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     if state:
         await state.finish()
@@ -1997,7 +1625,7 @@ async def admin_tags(query: CallbackQuery, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.del_tag, callback_data='del_tag'))
     await query.message.answer(text)
     msg_id = await query.message.answer(msgs.tag_list2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.message_handler(text=buttons.tags)
@@ -2016,14 +1644,12 @@ async def admin_tags(message: types.Message):
     keyboard.add(InlineKeyboardButton(buttons.add_tag, callback_data='add_tag'), InlineKeyboardButton(buttons.del_tag, callback_data='del_tag'))
     await set_keyboard_back(message, text)
     msg_id = await message.answer(msgs.tag_list2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains='update_visible_')
 async def update_visible(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     tag_id = query.data.split('_')[2]
     tag = await Tag.get(id=int(tag_id))
@@ -2058,18 +1684,16 @@ async def admin_tags2(message: types.Message, state: FSMContext):
                  InlineKeyboardButton(buttons.del_tag, callback_data='del_tag'))
     await set_keyboard_back(message, text)
     msg_id = await message.answer(msgs.tag_list2, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='add_tag')
 async def add_tag(query: CallbackQuery):
     if query.message.chat.id not in admins:
         return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await AddTag.name.set()
     msg_id = await query.message.answer(msgs.add_tag)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.message_handler(state=AddTag.name)
@@ -2086,15 +1710,13 @@ async def add_tag_handler(message: types.Message, state: FSMContext):
 async def del_tag(query: CallbackQuery):
     if query.message.chat.id not in admins:
         return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     tags = await Tag.filter()
     await DelTag.name.set()
     keyboard = InlineKeyboardMarkup()
     for i in tags:
         keyboard.add(InlineKeyboardButton(i.name, callback_data=f'del_tag_{i.id}'))
     msg_id = await query.message.answer(msgs.del_tag, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def del_tag2(message: types.Message):
@@ -2106,14 +1728,12 @@ async def del_tag2(message: types.Message):
     for i in tags:
         keyboard.add(InlineKeyboardButton(i.name, callback_data=f'del_tag_{i.id}'))
     msg_id = await message.answer(msgs.del_tag, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains='del_tag_', state=DelTag.name)
 async def del_tag_handler(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     # await state.finish()
     to_delete = int(query.data.split('_')[2])
@@ -2123,14 +1743,12 @@ async def del_tag_handler(query: CallbackQuery, state: FSMContext):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(buttons.confirm, callback_data=f'del_tagconfirm_{to_delete}'))
     msg_id = await query.message.answer(msgs.del_tag_confirm.format(tag.name), reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains='del_tagconfirm_', state=DelTag.confirmation)
 async def del_tagconfirm(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     await state.finish()
     to_delete = int(query.data.split('_')[2])
@@ -2145,8 +1763,6 @@ async def del_tagconfirm(query: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='broadcast')
 async def broadcast_handler(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     await Broadcast.text.set()
     await set_keyboard_back(query.message, msgs.enter_text)
@@ -2174,7 +1790,7 @@ async def broadcast_text_handler(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
     keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
     msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 async def broadcast_text_handler2(message: types.Message, state: FSMContext):
@@ -2186,15 +1802,13 @@ async def broadcast_text_handler2(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
     keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
     msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 
 @dp.callback_query_handler(state=Broadcast.next_step)
 async def broadcast_next_step_handler(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     if query.data in ['add_photo', 'add_video', 'add_link']:
         await Broadcast.next()
@@ -2227,7 +1841,7 @@ async def broadcast_next_step_handler(query: CallbackQuery, state: FSMContext):
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton(buttons.all_is_good, callback_data='all_is_good'))
         msg_id = await query.message.answer(msgs.all_is_good, reply_markup=keyboard)
-        message_ids[msg_id.chat.id] = msg_id.message_id
+        await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='all_is_good', state=Broadcast.conf_)
@@ -2240,7 +1854,7 @@ async def conf_(query: CallbackQuery, state: FSMContext):
         keyboard.add(InlineKeyboardButton(i.name, callback_data=f'choose_broadcast_tag_{i.id}'))
     await query.message.answer(msgs.choose_tags_for_broadcast)
     msg_id = await query.message.answer(msgs.chosen_are_marked, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.message_handler(content_types=ContentType.PHOTO, state=Broadcast.attachment)
@@ -2266,7 +1880,7 @@ async def photo_handler(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
     keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
     msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.message_handler(content_types=ContentType.VIDEO, state=Broadcast.attachment)
@@ -2292,7 +1906,7 @@ async def video_handler(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
     keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
     msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.message_handler(content_types=ContentType.TEXT, state=Broadcast.attachment)
@@ -2300,17 +1914,6 @@ async def link_handler(message: types.Message, state: FSMContext):
     if message.chat.id not in admins:
         return
     text = message.text
-    # if '=' not in text:
-    #     await message.answer(msgs.wrong_format_link)
-    #     return
-    # splitted_text = [i.strip() for i in text.split('=')]
-    # if len(splitted_text) != 2:
-    #     await message.answer(msgs.wrong_format_link)
-    #     return
-    # is_url = validators.url(splitted_text[1])
-    # if not is_url:
-    #     await message.answer(msgs.wrong_format_link)
-    #     return
     cur_atachments = (await state.get_data()).get('attachment')
     if not cur_atachments:
         cur_atachments = {'photos': [],
@@ -2320,29 +1923,6 @@ async def link_handler(message: types.Message, state: FSMContext):
     await state.update_data(attachment=cur_atachments)
     await Broadcast.attachment2.set()
     await message.answer(msgs.send_link2)
-
-    # await Broadcast.next_step.set()
-    # await message.answer(msgs.now_message_is)
-    # keyboard = InlineKeyboardMarkup()
-    # if cur_atachments.get('links'):
-    #     for i in cur_atachments['links']:
-    #         keyboard.add(InlineKeyboardButton(i[0], url=i[1]))
-    # if cur_atachments.get('photos'):
-    #     await message.answer_photo(cur_atachments['photos'][0], caption=(await state.get_data()).get('text'),
-    #                                reply_markup=keyboard)
-    # elif cur_atachments.get('videos'):
-    #     await message.answer_video(cur_atachments['videos'][0], caption=(await state.get_data()).get('text'),
-    #                                reply_markup=keyboard)
-    # else:
-    #     await message.answer((await state.get_data()).get('text'), reply_markup=keyboard)
-    # keyboard = InlineKeyboardMarkup()
-    # if not cur_atachments.get('photos') and not cur_atachments.get('videos'):
-    #     keyboard.add(InlineKeyboardButton(buttons.add_photo, callback_data='add_photo'))
-    #     keyboard.add(InlineKeyboardButton(buttons.add_video, callback_data='add_video'))
-    # keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
-    # keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
-    # msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    # message_ids[msg_id.chat.id] = msg_id.message_id
 
 @dp.message_handler(content_types=ContentType.TEXT, state=Broadcast.attachment2)
 async def link2_handler(message: types.Message, state: FSMContext):
@@ -2377,14 +1957,12 @@ async def link2_handler(message: types.Message, state: FSMContext):
     keyboard.add(InlineKeyboardButton(buttons.add_link, callback_data='add_link'))
     keyboard.add(InlineKeyboardButton(buttons.all_ready, callback_data='all_ready'))
     msg_id = await message.answer(msgs.choose_what_to_do, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text_contains='choose_broadcast_tag_', state=Broadcast.tags)
 async def choose_broadcast_tag_handler(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     tag_id = int(query.data.split('_')[3])
     tags_current = (await state.get_data()).get('tags')
@@ -2415,8 +1993,6 @@ async def choose_broadcast_tag_handler(query: CallbackQuery, state: FSMContext):
 async def broadcast_next(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
         return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     await Broadcast.confirmation.set()
     async with state.proxy() as data:
         tags = await Tag.filter(pk__in=data['tags'])
@@ -2444,14 +2020,12 @@ async def broadcast_next(query: CallbackQuery, state: FSMContext):
         keyboard.add(InlineKeyboardButton(buttons.yes, callback_data='broadcast_confirm'),
                      InlineKeyboardButton(buttons.no, callback_data='broadcast_wrong'))
         msg_id = await query.message.answer(msgs.all_is_good, reply_markup=keyboard)
-        message_ids[msg_id.chat.id] = msg_id.message_id
+        await set_message_id(msg_id)
 
 
 @dp.callback_query_handler(text='broadcast_wrong', state=Broadcast.confirmation)
 async def broadcast_wrong(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     await state.update_data(tags=None)
     await state.update_data(text=None)
@@ -2462,8 +2036,6 @@ async def broadcast_wrong(query: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='broadcast_confirm', state=Broadcast.confirmation)
 async def broadcast_confirm(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     async with state.proxy() as data:
         tags = await Tag.filter(pk__in=data['tags']).values_list('id', flat=True)
@@ -2543,8 +2115,6 @@ async def broadcast_history(message: types.Message, state: FSMContext, flag=Fals
 async def broadcast_history_tag(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
         return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
-        return
     tag_id = int(query.data.split('_')[3])
     tags_current = (await state.get_data()).get('tags')
     tags = []
@@ -2600,7 +2170,7 @@ async def broadcast_next3(message: types.Message, state: FSMContext):
                      InlineKeyboardButton(' ', callback_data=' '),
                      )
     msg_id = await message.answer(text, reply_markup=keyboard)
-    message_ids[msg_id.chat.id] = msg_id.message_id
+    await set_message_id(msg_id)
     # text += msgs.broadcast_history_end
     await set_keyboard_back(message, msgs.broadcast_history_end)
 
@@ -2608,8 +2178,6 @@ async def broadcast_next3(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text_contains='broadcast_history_page_', state=BroadcastHistoryStates)
 async def broadcast_history_page(query: CallbackQuery, state: FSMContext):
     if query.message.chat.id not in admins:
-        return
-    if query.message.message_id != message_ids.get(query.message.chat.id):
         return
     page = int(query.data.split('_')[3])
     tags_state = (await state.get_data()).get('tags')
@@ -2636,8 +2204,7 @@ async def broadcast_history_page(query: CallbackQuery, state: FSMContext):
         keyboard.add(InlineKeyboardButton(buttons.page_back, callback_data=f'broadcast_history_page_{page - 1}'),
                      InlineKeyboardButton(' ', callback_data=' '))
     await query.message.edit_text(text, reply_markup=keyboard)
-    # await bot.edit_message_reply_markup(query.message.chat.id, query.message.message_id, reply_markup=keyboard)
-    # await query.message.edit_reply_markup(reply_markup=keyboard)
+
 
 
 @dp.message_handler(state=BroadcastHistoryStates.wait)

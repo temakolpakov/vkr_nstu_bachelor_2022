@@ -6,7 +6,9 @@ import messages.ru_messages as msgs
 
 message_ids = {}
 
-excluded_from_middleware = ['global_back']
+excluded_from_middleware = ['global_back', 'PREV-YEAR_', 'NEXT-YEAR_', 'PREV-MONTH_', 'NEXT-MONTH_', 'settings',
+                            'yes_interrupt', 'no_interrupt', 'new_booking', 'presence_yes_', 'presence_maybe_',
+                            'presence_no']
 
 excluded_from_answer = ['']
 

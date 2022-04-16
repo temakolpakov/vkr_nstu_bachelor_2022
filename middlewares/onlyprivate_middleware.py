@@ -2,7 +2,7 @@ from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 
-group_commands = []
+group_commands = ['/enableinfo', '/disableinfo']
 
 class OnlyPrivateMiddleware(BaseMiddleware):
     async def on_pre_process_message(self, message: types.Message, data: dict):
