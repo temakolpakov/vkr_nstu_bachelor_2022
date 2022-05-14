@@ -2,6 +2,8 @@ import re
 
 import phonenumbers
 
+from models import AdminSend
+
 phone_regex = '^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$'
 
 
@@ -47,3 +49,15 @@ async def is_phone_valid(text):
         if phone and phone.string == text:
             return text
     return None
+
+
+
+async def reformat_times(time_available, times):
+    for i in times:
+        for j, k in enumerate(i):
+            if k not in time_available:
+                i[j] = ' '
+    return times
+
+async def admin_sender(msg_text, restaurant_number):
+    await AdminSend.create(text=msg_text, restaurant=restaurant_number)
