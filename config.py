@@ -75,37 +75,9 @@ etalon_times_dict = {'09:00': 0, '09:15': 1, '09:30': 2, '09:45': 3, '10:00': 4,
                      '18:00': 36, '18:15': 37, '18:30': 38, '18:45': 39, '19:00': 40, '19:15': 41, '19:30': 42,
                      '19:45': 43, '20:00': 44, '20:15': 45, '20:30': 46, '20:45': 47, '21:00': 48, '21:15': 49,
                      '21:30': 50, '21:45': 51, '22:00': 52, '22:15': 53, '22:30': 54, '22:45': 55, '23:00': 56}
-#
-# TEMPLATE_IMAGE_1 = os.environ.get('TEMPLATE_IMAGE_1')
-#
-# TEMPLATE_IMAGE_2 = os.environ.get('TEMPLATE_IMAGE_2')
+
 
 PATH_TO_SAVE = os.environ.get('PATH_TO_SAVE')
-#
-# table_cords_1 = {1: ['rectangle', (83, 428), (152, 570), 0.2],
-#                  2: ['rectangle', (83, 570), (152, 717), 0.2],
-#                  3: ['rectangle', (206, 187), (320, 306), 0],
-#                  4: ['rectangle', (360, 187), (475, 306), 0],
-#                  5: ['rectangle', (507, 187), (620, 306), 0],
-#                  6: ['rectangle', (653, 187), (768, 306), 0],
-#                  7: ['rectangle', (807, 187), (920, 306), 0],
-#                  8: ['rectangle', (993, 187), (1243, 306), 0.4],
-#                  9: ['rectangle', (1302, 187), (1553, 306), 0.4],
-#                  10: ['rectangle', (508, 615), (620, 735), 0],
-#                  11: ['rectangle', (654, 615), (767, 735), 0],
-#                  12: ['rectangle', (809, 615), (921, 735), 0],
-#                  13: ['rectangle', (1075, 615), (1300, 735), 0.4],
-#                  14: ['rectangle', (1375, 615), (1600, 735), 0.4],
-#                  25: ['rectangle', (290, 500), (440, 790), 0.2]}
-#
-# table_cords_2 = {15: ['rectangle', (367, 252), (472, 565), 0.1],
-#                  16: ['rectangle', (647, 192), (757, 308), 0],
-#                  17: ['rectangle', (902, 192), (1012, 308), 0],
-#                  18: ['rectangle', (617, 569), (857, 682), 0.4],
-#                  19: ['rectangle', (902, 569), (1146, 682), 0.4],
-#                  20: ['rectangle', (1177, 569), (1419, 682), 0.4],
-#                  21: ['rectangle', (1260, 220), (1369, 336), 0],
-#                  22: ['rectangle', (1260, 362), (1369, 475), 0]}
 
 admins = ['',
           78640232,
@@ -136,101 +108,101 @@ RESTAURANT_PASSWORDS = {1: PASSWORD_1,
                         3: PASSWORD_3}
 
 # Формат - {Столик: [id фона, id цифры, id рамки, [id стула, id стула]}
-volynskyi_first_floor = {1: ['path30', 'path32', 'path34', ['path28', 'path36', 'path38']],
-                         3: ['path42', 'path44', 'path46', ['path40', 'path48', 'path50']],
-                         5: ['path10', 'path12', 'path14', ['path6', 'path8']],
-                         6: ['path20', 'path22', 'path24', ['path16', 'path18']],
-                         7: ['path114', 'path116', 'path118',
+address3_first_floor = {1: ['path30', 'path32', 'path34', ['path28', 'path36', 'path38']],
+                       3: ['path42', 'path44', 'path46', ['path40', 'path48', 'path50']],
+                       5: ['path10', 'path12', 'path14', ['path6', 'path8']],
+                       6: ['path20', 'path22', 'path24', ['path16', 'path18']],
+                       7: ['path114', 'path116', 'path118',
                              ['path106', 'path102', 'path110', 'path112', 'path104', 'path108']],
-                         8: ['path80', 'path82', 'path84', ['path76', 'path78', 'path86', 'path88']],
-                         10: ['path92', 'path94', 'path96', ['path90', 'path98']],
-                         11: ['path56', 'path58', 'path60', ['path54', 'path62']],
-                         122: ['path66', 'path68', 'path70', ['path64', 'path72']],
-                         12: ['path128', 'path130', 'path132', ['path126', 'path124', 'path122']]
-                         }
+                       8: ['path80', 'path82', 'path84', ['path76', 'path78', 'path86', 'path88']],
+                       10: ['path92', 'path94', 'path96', ['path90', 'path98']],
+                       11: ['path56', 'path58', 'path60', ['path54', 'path62']],
+                       122: ['path66', 'path68', 'path70', ['path64', 'path72']],
+                       12: ['path128', 'path130', 'path132', ['path126', 'path124', 'path122']]
+                       }
 
-volynskyi_second_floor_1 = {18: ['rect64', 'path66', 'rect68', ['path70', 'path72']],
-                            19: ['path24', 'path26', 'path28', ['path22', 'path30']],
-                            20: ['path34', 'path36', 'path38', ['path32', 'path40']],
-                            21: ['path44', 'path46', 'path48', ['path42', 'path50']],
-                            22: ['path54', 'path56', 'path58', ['path52', 'path60']],
-                            23: ['path178', 'path180', 'path182', ['path176']],
-                            24: ['path186', 'path188', 'path190', ['path184']],
-                            25: ['path194', 'path196', 'path198', ['path192']],
-                            26: ['path122', 'path124', 'path126', ['path120', 'path128']],
-                            27: ['path134', 'path136', 'path138', ['path130', 'path132', 'path140']],
-                            29: ['path144', 'path146', 'path148', ['path142', 'path150']],
-                            30: ['path156', 'path158', 'path160', ['path152', 'path154', 'path162']],
-                            32: ['path166', 'path168', 'path170', ['path164', 'path172']],
-                            33: ['path88', 'path90', 'path92',
+address3_second_floor_1 = {18: ['rect64', 'path66', 'rect68', ['path70', 'path72']],
+                          19: ['path24', 'path26', 'path28', ['path22', 'path30']],
+                          20: ['path34', 'path36', 'path38', ['path32', 'path40']],
+                          21: ['path44', 'path46', 'path48', ['path42', 'path50']],
+                          22: ['path54', 'path56', 'path58', ['path52', 'path60']],
+                          23: ['path178', 'path180', 'path182', ['path176']],
+                          24: ['path186', 'path188', 'path190', ['path184']],
+                          25: ['path194', 'path196', 'path198', ['path192']],
+                          26: ['path122', 'path124', 'path126', ['path120', 'path128']],
+                          27: ['path134', 'path136', 'path138', ['path130', 'path132', 'path140']],
+                          29: ['path144', 'path146', 'path148', ['path142', 'path150']],
+                          30: ['path156', 'path158', 'path160', ['path152', 'path154', 'path162']],
+                          32: ['path166', 'path168', 'path170', ['path164', 'path172']],
+                          33: ['path88', 'path90', 'path92',
                                  ['path76', 'path78', 'path80', 'path82', 'path84', 'path86']],
-                            34: ['path104', 'path106', 'path108',
+                          34: ['path104', 'path106', 'path108',
                                  ['path96', 'path98', 'path100', 'path102', 'path110', 'path112', 'path114',
                                   'path116']]}
 
-volynskyi_second_floor_2 = {38: ['path8', 'path10', 'path12', ['path6', 'path14', 'path16']],
-                            40: ['path38', 'path40', 'path42', ['path36', 'path44']],
-                            41: ['path48', 'path50', 'path52', ['path46', 'path54']],
-                            42: ['path58', 'path60', 'path62', ['path56', 'path64']],
-                            43: ['path68', 'path70', 'path72', ['path66', 'path74']],
-                            44: ['path80', 'path82', 'path84', ['path78', 'path86']],
-                            46: ['path26', 'path28', 'path30', ['path20', 'path22', 'path24', 'path32']]}
+address3_second_floor_2 = {38: ['path8', 'path10', 'path12', ['path6', 'path14', 'path16']],
+                          40: ['path38', 'path40', 'path42', ['path36', 'path44']],
+                          41: ['path48', 'path50', 'path52', ['path46', 'path54']],
+                          42: ['path58', 'path60', 'path62', ['path56', 'path64']],
+                          43: ['path68', 'path70', 'path72', ['path66', 'path74']],
+                          44: ['path80', 'path82', 'path84', ['path78', 'path86']],
+                          46: ['path26', 'path28', 'path30', ['path20', 'path22', 'path24', 'path32']]}
 
-bolshoy_prospekt = {1: ['path182', 'path184', 'path186', ['path180', 'path178', 'path190', 'path188']],
-                    2: ['path54', 'path56', 'path58', ['path52', 'path60', 'path62']],
-                    3: ['path42', 'path44', 'path46', ['path40', 'path50', 'path48']],
-                    4: ['path30', 'path32', 'path34', ['path28', 'path38', 'path36']],
-                    5: ['path94', 'path96', 'path98', ['path92', 'path100']],
-                    6: ['path104', 'path106', 'path108', ['path102', 'path110']],
-                    7: ['path116', 'path118', 'path120', ['path114', 'path122']],
-                    8: ['path126', 'path128', 'path130', ['path124', 'path132']],
-                    9: ['path136', 'path138', 'path140', ['path134', 'path142']],
-                    10: ['path14', 'path16', 'path18', ['path12', 'path10', 'path8', 'path24', 'path22', 'path20']],
-                    11: ['path148', 'path150', 'path152', ['path146', 'path154']],
-                    12: ['path158', 'path160', 'path162', ['path156', 'path164']],
-                    13: ['path168', 'path170', 'path172', ['path166', 'path174']],
-                    14: ['path82', 'path84', 'path86', ['path80', 'path78', 'path88']],
-                    15: ['path68', 'path70', 'path72', ['path66', 'path76', 'path74']]}
+address2_1 = {1: ['path182', 'path184', 'path186', ['path180', 'path178', 'path190', 'path188']],
+             2: ['path54', 'path56', 'path58', ['path52', 'path60', 'path62']],
+             3: ['path42', 'path44', 'path46', ['path40', 'path50', 'path48']],
+             4: ['path30', 'path32', 'path34', ['path28', 'path38', 'path36']],
+             5: ['path94', 'path96', 'path98', ['path92', 'path100']],
+             6: ['path104', 'path106', 'path108', ['path102', 'path110']],
+             7: ['path116', 'path118', 'path120', ['path114', 'path122']],
+             8: ['path126', 'path128', 'path130', ['path124', 'path132']],
+             9: ['path136', 'path138', 'path140', ['path134', 'path142']],
+             10: ['path14', 'path16', 'path18', ['path12', 'path10', 'path8', 'path24', 'path22', 'path20']],
+             11: ['path148', 'path150', 'path152', ['path146', 'path154']],
+             12: ['path158', 'path160', 'path162', ['path156', 'path164']],
+             13: ['path168', 'path170', 'path172', ['path166', 'path174']],
+             14: ['path82', 'path84', 'path86', ['path80', 'path78', 'path88']],
+             15: ['path68', 'path70', 'path72', ['path66', 'path76', 'path74']]}
 
-sovetskaya_1 = {1: ['path92', 'path94', 'path96', ['path98', 'path100']],
-                3: ['path10', 'path12', 'path14', ['path8', 'path16']],
-                4: ['path20', 'path22', 'path24', ['path18', 'path26']],
-                5: ['path30', 'path32', 'path34', ['path28', 'path36']],
-                6: ['path40', 'path42', 'path44', ['path38', 'path46']],
-                7: ['path50', 'path52', 'path54', ['path48', 'path56']],
-                8: ['path108', 'path110', 'path112', ['path104', 'path106', 'path114', 'path116']],
-                9: ['path122', 'path124', 'path126', ['path118', 'path120', 'path128', 'path130']],
-                10: ['path62', 'path64', 'path66', ['path60', 'path68']],
-                11: ['path72', 'path74', 'path76', ['path70', 'path78']],
-                12: ['path82', 'path84', 'path86', ['path80', 'path88']],
-                13: ['path140', 'path142', 'path144',
+address1_1 = {1: ['path92', 'path94', 'path96', ['path98', 'path100']],
+             3: ['path10', 'path12', 'path14', ['path8', 'path16']],
+             4: ['path20', 'path22', 'path24', ['path18', 'path26']],
+             5: ['path30', 'path32', 'path34', ['path28', 'path36']],
+             6: ['path40', 'path42', 'path44', ['path38', 'path46']],
+             7: ['path50', 'path52', 'path54', ['path48', 'path56']],
+             8: ['path108', 'path110', 'path112', ['path104', 'path106', 'path114', 'path116']],
+             9: ['path122', 'path124', 'path126', ['path118', 'path120', 'path128', 'path130']],
+             10: ['path62', 'path64', 'path66', ['path60', 'path68']],
+             11: ['path72', 'path74', 'path76', ['path70', 'path78']],
+             12: ['path82', 'path84', 'path86', ['path80', 'path88']],
+             13: ['path140', 'path142', 'path144',
                      ['path134', 'path136', 'path138', 'path146', 'path148', 'path150']],
-                14: ['path158', 'path160', 'path162',
+             14: ['path158', 'path160', 'path162',
                      ['path152', 'path154', 'path156', 'path164', 'path166', 'path168']]}
 
-sovetskaya_2 = {15: ['path96', 'path98', 'path100',
-                     ['path94', 'path92', 'path90', 'path88', 'path102', 'path104', 'path106', 'path108']],
-                16: ['path10', 'path12', 'path14', ['path8', 'path16']],
-                17: ['path20', 'path22', 'path24', ['path18', 'path26']],
-                18: ['path44', 'path46', 'path48', ['path40', 'path42', 'path50']],
-                19: ['path56', 'path58', 'path60', ['path52', 'path54', 'path62']],
-                20: ['path68', 'path70', 'path72', ['path64', 'path66', 'path74']],
-                21: ['path30', 'path32', 'path34', ['path28', 'path36']]}
+address1_2 = {15: ['path96', 'path98', 'path100',
+                  ['path94', 'path92', 'path90', 'path88', 'path102', 'path104', 'path106', 'path108']],
+             16: ['path10', 'path12', 'path14', ['path8', 'path16']],
+             17: ['path20', 'path22', 'path24', ['path18', 'path26']],
+             18: ['path44', 'path46', 'path48', ['path40', 'path42', 'path50']],
+             19: ['path56', 'path58', 'path60', ['path52', 'path54', 'path62']],
+             20: ['path68', 'path70', 'path72', ['path64', 'path66', 'path74']],
+             21: ['path30', 'path32', 'path34', ['path28', 'path36']]}
 
 ['path', 'path', 'path', ['path']]
 
-volynskyi_first_floor_svg = os.environ.get('volynskyi_first_floor_svg')
-volynskyi_second_floor_1_svg = os.environ.get('volynskyi_second_floor_1_svg')
-volynskyi_second_floor_2_svg = os.environ.get('volynskyi_second_floor_2_svg')
+address3_first_floor_svg = os.environ.get('address3_first_floor_svg')
+address3_second_floor_1_svg = os.environ.get('address3_second_floor_1_svg')
+address3_second_floor_2_svg = os.environ.get('address3_second_floor_2_svg')
 
-bolshoy_prospekt_svg = os.environ.get('bolshoy_prospekt_svg')
+address2_1_svg = os.environ.get('address2_1_svg')
 
-sovetskaya_1_svg = os.environ.get('sovetskaya_1_svg')
+address1_1_svg = os.environ.get('address1_1_svg')
 
-sovetskaya_2_svg = os.environ.get('sovetskaya_2_svg')
+address1_2_svg = os.environ.get('address1_2_svg')
 
-TEMPLATES_RESTAURANTS_SVG_IDS = {1: [[sovetskaya_1_svg, sovetskaya_1], [sovetskaya_2_svg, sovetskaya_2]],
-                                 2: [[bolshoy_prospekt_svg, bolshoy_prospekt]],
-                                 3: [[volynskyi_first_floor_svg, volynskyi_first_floor],
-                                     [volynskyi_second_floor_1_svg, volynskyi_second_floor_1],
-                                     [volynskyi_second_floor_2_svg, volynskyi_second_floor_2]]}
+TEMPLATES_RESTAURANTS_SVG_IDS = {1: [[address1_1_svg, address1_1], [address1_2_svg, address1_2]],
+                                 2: [[address2_1_svg, address2_1]],
+                                 3: [[address3_first_floor_svg, address3_first_floor],
+                                     [address3_second_floor_1_svg, address3_second_floor_1],
+                                     [address3_second_floor_2_svg, address3_second_floor_2]]}

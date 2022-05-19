@@ -1,8 +1,8 @@
-soviet_restaurant = '8-ая Советская, 4'
+address1 = 'Адрес1'
 
-big_avenue_restaurant = 'Большой проспект' #' Петроградской стороны 71,А'
+address2 = 'Адрес2'
 
-volynskyi_restaurant = 'Волынский переулок, дом 8'
+address3 = 'Адрес3'
 
 back = '⬅️ Назад'
 

@@ -126,9 +126,9 @@ async def booking_keyboard():
 
 async def restaurants_keyboard():
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(btns.soviet_restaurant, callback_data='restaurant_1'))
-    keyboard.add(InlineKeyboardButton(btns.big_avenue_restaurant, callback_data='restaurant_2'))
-    keyboard.add(InlineKeyboardButton(btns.volynskyi_restaurant, callback_data='restaurant_3'))
+    keyboard.add(InlineKeyboardButton(btns.address1, callback_data='restaurant_1'))
+    keyboard.add(InlineKeyboardButton(btns.address2, callback_data='restaurant_2'))
+    keyboard.add(InlineKeyboardButton(btns.address3, callback_data='restaurant_3'))
     return keyboard
 
 
@@ -148,21 +148,21 @@ async def edit_restaurants_keyboard(restaurant_number):
     edit_keyboard = InlineKeyboardMarkup()
     if restaurant_number == 1:
         edit_keyboard.add(
-            InlineKeyboardButton(btns.check_mark + btns.soviet_restaurant, callback_data='restaurant_1'))
-        edit_keyboard.add(InlineKeyboardButton(btns.big_avenue_restaurant, callback_data='restaurant_2'))
-        edit_keyboard.add(InlineKeyboardButton(btns.volynskyi_restaurant, callback_data='restaurant_3'))
+            InlineKeyboardButton(btns.check_mark + btns.address1, callback_data='restaurant_1'))
+        edit_keyboard.add(InlineKeyboardButton(btns.address2, callback_data='restaurant_2'))
+        edit_keyboard.add(InlineKeyboardButton(btns.address3, callback_data='restaurant_3'))
     elif restaurant_number == 2:
         edit_keyboard.add(
-            InlineKeyboardButton(btns.soviet_restaurant, callback_data='restaurant_1'))
+            InlineKeyboardButton(btns.address1, callback_data='restaurant_1'))
         edit_keyboard.add(
-            InlineKeyboardButton(btns.check_mark + btns.big_avenue_restaurant, callback_data='restaurant_2'))
-        edit_keyboard.add(InlineKeyboardButton(btns.volynskyi_restaurant, callback_data='restaurant_3'))
+            InlineKeyboardButton(btns.check_mark + btns.address2, callback_data='restaurant_2'))
+        edit_keyboard.add(InlineKeyboardButton(btns.address3, callback_data='restaurant_3'))
     elif restaurant_number == 3:
         edit_keyboard.add(
-            InlineKeyboardButton(btns.soviet_restaurant, callback_data='restaurant_1'))
-        edit_keyboard.add(InlineKeyboardButton(btns.big_avenue_restaurant, callback_data='restaurant_2'))
+            InlineKeyboardButton(btns.address1, callback_data='restaurant_1'))
+        edit_keyboard.add(InlineKeyboardButton(btns.address2, callback_data='restaurant_2'))
         edit_keyboard.add(
-            InlineKeyboardButton(btns.check_mark + btns.volynskyi_restaurant, callback_data='restaurant_3'))
+            InlineKeyboardButton(btns.check_mark + btns.address3, callback_data='restaurant_3'))
     return edit_keyboard
 
 
