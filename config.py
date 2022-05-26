@@ -86,6 +86,8 @@ admins = ['',
           ]
 
 BOT_TOKEN_ADMIN = os.environ.get('BOT_TOKEN_ADMIN')
+LOG_FILE_ADMIN = os.environ.get('LOG_FILE_ADMIN')
+
 
 broadcaster_queue = asyncio.Queue()
 

@@ -1,22 +1,15 @@
-from aiogram import Bot, Dispatcher, types
+from aiogram import types
 
 from aiogram.types import CallbackQuery
-from aiogram.utils import executor, exceptions
 
 from aiogram.dispatcher import FSMContext
-from buttons import ru_buttons as btns
-import asyncio
 from models import *
 from messages import ru_messages as msgs
-from google_sheet_functions import *
-import datetime
+from helpers_dir.google_sheet_functions import *
 
-from img_helper import get_colored_image
-import uuid
-from bot_setup import bot, dp, logger
 from states import *
-from helpers import safe_for_markdown, is_phone_valid, reformat_times, admin_sender
-from middlewares.answercallback_middleware import message_ids, set_message_id
+from helpers_dir.helpers import is_phone_valid
+from middlewares.answercallback_middleware import set_message_id
 from keyboards import ru_keyboards as kb
 
 

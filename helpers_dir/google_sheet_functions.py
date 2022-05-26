@@ -1,20 +1,10 @@
 import gspread
 import config
-from gspread_format_helper import yellow_color, get_color_with_alpha
-import json
-import jsondiff
-import datetime
-from gspread_formatting import *
-import logging
-import numpy as np
-import models
+from helpers_dir.gspread_format_helper import yellow_color, get_color_with_alpha
 
-logging.basicConfig(
-    filename=config.LOG_FILE,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
-log = logging.getLogger('gspread')
+from gspread_formatting import *
+import models
+from loguru import logger
 
 
 async def colnum_string(n):
@@ -52,7 +42,7 @@ async def create_wks(restaurant_number, wks_name):
     count_wks = len(sheet.worksheets())
     wks = sheet.worksheet('Шаблон')
     wks_dup = wks.duplicate(insert_sheet_index=count_wks, new_sheet_name=wks_name)
-    log.info(f'Created wks - {wks_name}')
+    logger.info(f'Created wks - {wks_name}')
     return wks_dup
 
 
@@ -63,10 +53,10 @@ async def create_wks_joint(restaurant_number, wks_name, joint_name=False):
     wks_joint = sheet.worksheet('Шаблон (Общие)')
     if not joint_name:
         wks_joint_dup = wks_joint.duplicate(insert_sheet_index=count_wks, new_sheet_name=wks_name + ' (Общие)')
-        log.info(f'Created wks - {wks_name} (Общие)')
+        logger.info(f'Created wks - {wks_name} (Общие)')
     else:
         wks_joint_dup = wks_joint.duplicate(insert_sheet_index=count_wks, new_sheet_name=wks_name)
-        log.info(f'Created wks - {wks_name}')
+        logger.info(f'Created wks - {wks_name}')
     return wks_joint_dup
 
 
@@ -142,7 +132,7 @@ async def get_available_tables(restaurant_number, how_many, date, exact_time):
             if (len(upper_times) == 0 or all([j[i] == '' for j in upper_times])):
                 tables_timies.append(i)
 
-    log.info(f'Available tables - {tables_timies}')
+    logger.info(f'Available tables - {tables_timies}')
     return tables_timies
 
 
@@ -185,7 +175,7 @@ async def create_order(restaurant_number, how_many, date, time, table, name, pho
         filling.append(['ID ' + str(order_id)] * how_many)
         wks_joint.update(column_range,
                          filling)
-        log.info(f'Create order - {column_range}')
+        logger.info(f'Create order - {column_range}')
         fmt1 = CellFormat(backgroundColor=yellow_color, borders=Borders(bottom=Border('NONE'), top=Border('SOLID'),
                                                                         right=Border('SOLID'),
                                                                         left=Border('SOLID')))
@@ -329,7 +319,7 @@ async def create_order(restaurant_number, how_many, date, time, table, name, pho
         filling.append(['ID ' + str(order_id)])
         wks.update(column_range,
                    filling)
-        log.info(f'Create order - {column_range}')
+        logger.info(f'Create order - {column_range}')
         fmt1 = CellFormat(backgroundColor=yellow_color, borders=Borders(bottom=Border('NONE'), top=Border('SOLID'),
                                                                         right=Border('SOLID'),
                                                                         left=Border('SOLID')))
@@ -373,7 +363,7 @@ async def delete_order(restaurant_number, date, table_range, table_joint_range, 
                                          top=Border('SOLID', Color(0.85, 0.85, 0.85)),
                                          right=Border('SOLID', Color(0.85, 0.85, 0.85)),
                                          left=Border('SOLID', Color(0.85, 0.85, 0.85))))
-        log.info(f'Delete order - {table_range}')
+        logger.info(f'Delete order - {table_range}')
         format_cell_range(wks, table_range, fmt)
         return True
     else:
@@ -384,7 +374,7 @@ async def delete_order(restaurant_number, date, table_range, table_joint_range, 
                                          top=Border('SOLID', Color(0.85, 0.85, 0.85)),
                                          right=Border('SOLID', Color(0.85, 0.85, 0.85)),
                                          left=Border('SOLID', Color(0.85, 0.85, 0.85))))
-        log.info(f'Delete order - {table_range} {table_joint_range}')
+        logger.info(f'Delete order - {table_range} {table_joint_range}')
         format_cell_range(wks_joint, table_joint_range, fmt)
 
         values = wks.get(table_range)
@@ -456,7 +446,7 @@ async def confirm_order_table(restaurant_number, date, table_range):
             formatted_ranges.append([ranges[i], fmt2])
 
     format_cell_ranges(wks, formatted_ranges)
-    log.info(f'Confirm order - {table_range}')
+    logger.info(f'Confirm order - {table_range}')
     return True
 
 
@@ -479,4 +469,4 @@ async def to_archive(restaurant_number, date):
     wks_joint.copy_to(config.ARCHIVE_DICT[restaurant_number])
     sheet.del_worksheet(wks)
     sheet.del_worksheet(wks_joint)
-    log.info(f'To archive - {restaurant_number}, {date}')
+    logger.info(f'To archive - {restaurant_number}, {date}')

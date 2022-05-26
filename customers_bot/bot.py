@@ -1,6 +1,5 @@
-from aiogram import Bot, Dispatcher, types
+from aiogram import Dispatcher, types
 
-from aiogram.types import CallbackQuery
 from aiogram.utils import executor, exceptions
 
 from aiogram.dispatcher import FSMContext
@@ -10,15 +9,12 @@ from buttons import ru_buttons as btns
 import asyncio
 from models import *
 from messages import ru_messages as msgs
-from google_sheet_functions import *
+from helpers_dir.google_sheet_functions import *
 import datetime
 
-from img_helper import get_colored_image
 import uuid
-from bot_setup import bot, dp, logger
+from bot_setup import bot, dp
 from states import *
-from helpers import safe_for_markdown, is_phone_valid
-from middlewares.answercallback_middleware import message_ids, set_message_id
 from keyboards import ru_keyboards as kb
 import back
 import settings_handlers
@@ -193,20 +189,20 @@ async def broadcast_sender(user_id, text, reply_markup=None, markdown=None, phot
             await bot.send_video(user_id, open(video, 'rb'), caption=text, reply_markup=reply_markup,
                                  parse_mode=markdown)
     except exceptions.BotBlocked:
-        log.error(f"Target [ID:{user_id}]: blocked by user")
+        logger.error(f"Target [ID:{user_id}]: blocked by user")
     except exceptions.ChatNotFound:
-        log.error(f"Target [ID:{user_id}]: invalid user ID")
+        logger.error(f"Target [ID:{user_id}]: invalid user ID")
     except exceptions.RetryAfter as e:
-        log.error(f"Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds.")
+        logger.error(f"Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds.")
         await asyncio.sleep(e.timeout)
         return await broadcast_sender(user_id, text,
                                       reply_markup=reply_markup, markdown=markdown, photo=photo,
                                       video=video)  # Recursive call
     except exceptions.UserDeactivated:
-        log.error(f"Target [ID:{user_id}]: user is deactivated")
+        logger.error(f"Target [ID:{user_id}]: user is deactivated")
     except exceptions.MigrateToChat as e:
-        log.exception(f"Target [ID:{user_id}]: failed")
-        log.error(text)
+        logger.exception(f"Target [ID:{user_id}]: failed")
+        logger.error(text)
         adm_chat = await AdminChat.get_or_none(chat_id=user_id)
         if adm_chat:
             adm_chat.chat_id = e.migrate_to_chat_id
@@ -215,11 +211,11 @@ async def broadcast_sender(user_id, text, reply_markup=None, markdown=None, phot
                                       reply_markup=reply_markup, markdown=markdown, photo=photo,
                                       video=video)
     except exceptions.TelegramAPIError:
-        log.exception(f"Target [ID:{user_id}]: failed")
-        log.error(text)
+        logger.exception(f"Target [ID:{user_id}]: failed")
+        logger.error(text)
 
     else:
-        log.info(f"Target [ID:{user_id}]: success")
+        logger.info(f"Target [ID:{user_id}]: success")
         return True
     return False
 

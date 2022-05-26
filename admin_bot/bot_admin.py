@@ -1,41 +1,13 @@
-import calendar
-import aiogram
-import phonenumbers
-from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.middlewares import BaseMiddleware
-from aiogram.types import CallbackQuery, ContentType
-from aiogram.utils import executor, exceptions
-from aiogram.utils.deep_linking import get_start_link, decode_payload
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
+from aiogram import Dispatcher
+from aiogram.types import ContentType
+from aiogram.utils import executor
 # from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
-import config
-import asyncio
-
-from img_helper import get_colored_image
 from models import *
-import messages.ru_messages_admin as msgs
-from google_sheet_functions import *
-import datetime
-import logging
-import random
-import re
-from aiogram.types import ChatActions
-from config import admins, broadcaster_queue
-import validators
-from logging_middleware import LoggingMiddleware
 from states_admin import *
-from bot_admin_setup import bot, dp
-from middlewares.answercallback_middleware import set_message_id
-from helpers import is_phone_valid, safe_for_markdown
-from keyboards import ru_keyboards_admin as kb
+from bot_admin_setup import dp
 from buttons import ru_buttons as btns
-from helpers import reformat_times
-import back_admin
-import booking_admin
-import admin_funcs
+from admin_bot import admin_funcs, back_admin, booking_admin
 
 
 async def back_handlers_setup(dispatcher: Dispatcher):

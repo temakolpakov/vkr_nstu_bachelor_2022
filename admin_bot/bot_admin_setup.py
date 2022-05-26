@@ -13,7 +13,7 @@ fmt = "{time} - {name} - {level} - {message}"
 
 logger.remove()
 
-logger.add(config.LOG_FILE, level='INFO', rotation='00:00')
+logger.add(config.LOG_FILE_ADMIN, level='INFO', rotation='00:00')
 
 bot = Bot(config.BOT_TOKEN_ADMIN)
 # storage = RedisStorage2(config.REDIS_HOST, config.REDIS_PORT, config.REDIS_DB, config.REDIS_PASSWORD)

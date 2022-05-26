@@ -5,12 +5,12 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 import config
-from admin_funcs import settings
+from admin_bot.admin_funcs import settings
 from bot_admin_setup import bot
 from config import admins
-from google_sheet_functions import create_order, create_order_without_table
-from helpers import reformat_times, safe_for_markdown, is_phone_valid
-from img_helper import get_colored_image
+from helpers_dir.google_sheet_functions import create_order, create_order_without_table
+from helpers_dir.helpers import reformat_times, safe_for_markdown, is_phone_valid
+from helpers_dir.img_helper import get_colored_image
 from keyboards import ru_keyboards_admin as kb
 from buttons import ru_buttons as btns
 from messages import ru_messages_admin as msgs

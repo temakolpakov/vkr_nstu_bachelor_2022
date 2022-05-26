@@ -1,80 +1,16 @@
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-
-from booking_admin import *
-from admin_funcs import *
-from keyboards import ru_keyboards_admin as kb
+from booking import *
+from settings_handlers import *
 from buttons import ru_buttons as btns
-from states_admin import *
+from messages import ru_messages as msgs
+import datetime
 
-
-# @dp.message_handler(text=btns.back, state=Broadcast.text)
-async def back_to_admin_menu(message: types.Message, state: FSMContext):
-    await state.finish()
-    await start(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=Broadcast.next_step)
-async def back_to_broadcast_text(message: types.Message, state: FSMContext):
-    await Broadcast.tags.set()
-    await state.update_data(tags=[])
-    await broadcast_menu(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=Broadcast.attachment)
-async def back_to_broadcast_next_step(message: types.Message, state: FSMContext):
-    await Broadcast.next_step.set()
-    await broadcast_text_handler2(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=Broadcast.attachment2)
-async def back_to_broadcast_atach(message: types.Message, state: FSMContext):
-    cur_atachments = (await state.get_data()).get('attachment')
-    if len(cur_atachments['links']):
-        if len(cur_atachments['links'][-1]) != 2:
-            cur_atachments['links'].pop(-1)
-    await state.update_data(attachment=cur_atachments)
-    await Broadcast.next_step.set()
-    await broadcast_text_handler2(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=Broadcast.conf_)
-# @dp.message_handler(text=btns.back, state=Broadcast.tags)
-async def back_to_broadcast_next_step2(message: types.Message, state: FSMContext):
-    await Broadcast.next_step.set()
-    await broadcast_text_handler2(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=AddTag.name)
-# @dp.message_handler(text=btns.back, state=DelTag.name)
-async def back_to_tags_menu(message: types.Message, state: FSMContext):
-    await state.finish()
-    await admin_tags2(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=DelTag.confirmation)
-async def back_to_del_tags(message: types.Message, state: FSMContext):
-    await DelTag.name.set()
-    await del_tag2(message)
-
-
-# @dp.message_handler(text=btns.back, state=BroadcastHistoryStates.tags)
-async def back_to_start(message: types.Message, state: FSMContext):
-    await state.finish()
-    await start(message, state)
-
-
-# @dp.message_handler(text=btns.back, state=BroadcastHistoryStates.id)
-# @dp.message_handler(text=btns.back, state=BroadcastHistoryStates.wait)
-async def back_to_broadcast_history(message: types.Message, state: FSMContext):
-    await BroadcastHistoryStates.tags.set()
-    await state.update_data(tags=[])
-    await broadcast_history(message, state, False)
+from bot_setup import dp
+from states import *
 
 
 # @dp.message_handler(text=btns.back, state=Booking.restaurant)
 async def back_to_main(message: types.Message, state: FSMContext):
-    await start(message, state)
+    await settings_(message, state)
 
 
 # @dp.message_handler(text=btns.back, state=Booking.how_many)
@@ -121,9 +57,15 @@ async def back_to_exact_time(message: types.Message, state: FSMContext):
         await rechoose_table_yes_no(message, state)
 
 
+# @dp.message_handler(text=btns.back, state=Booking.confirm_table)
+async def back_to_tables2(message: types.Message, state: FSMContext):
+    await Booking.table.set()
+    await rechose_table(message, state)
+
+
 # @dp.message_handler(text=btns.back, state=Booking.confirmation)
 async def back_to_tables(message: types.Message, state: FSMContext):
-    await Booking.previous()
+    await Booking.table.set()
     table = (await state.get_data()).get('table')
     if table == msgs.not_important:
         await state.update_data(table=msgs.yes_no)
@@ -156,7 +98,47 @@ async def back_to_confirmation3(message: types.Message, state: FSMContext):
     await rechose_confirm(message, state)
 
 
+# @dp.message_handler(text=btns.back, state=Changing.name)
+# @dp.message_handler(text=btns.back, state=Changing.phone)
+async def back_to_change_contact(message: types.Message, state: FSMContext):
+    await state.finish()
+    await settings_menu(message, state)
+
+
+# @dp.message_handler(text=btns.confirm_choise, state=ChangeTags.tag)
+# @dp.message_handler(text=btns.back, state=ChangeTags.tag)
+async def back_to_tags2(message: types.Message, state: FSMContext):
+    await state.finish()
+    await change_tag3(message, state)
+
+
+# @dp.message_handler(text=btns.back, state=Settings.change_contact)
+# @dp.message_handler(text=btns.back, state=Settings.change_tag)
+async def back_to_main_settings(message: types.Message, state: FSMContext):
+    await state.finish()
+    await settings(message, state)
+
+
 # @dp.message_handler(text=btns.back)
-async def back_to_admin_menu2(message: types.Message):
-    await set_message_id(message)
-    await start(message, None)
+async def back_to_menu(message: types.Message):
+    await settings(message, dp.current_state())
+
+
+# @dp.message_handler(text=btns.back_to_menu)
+# @dp.message_handler(text=btns.back_to_menu, state=Changing)
+async def settings_(message: types.Message, state: FSMContext):
+    if not state:
+        state = dp.current_state()
+    else:
+        await state.finish()
+    await settings(message, state)
+
+
+# @dp.message_handler(text=btns.back_to_settings)
+# @dp.message_handler(text=btns.back_to_settings, state=Changing)
+async def settings2_(message: types.Message, state: FSMContext):
+    if not state:
+        state = dp.current_state()
+    else:
+        await state.finish()
+    await settings_menu(message, state)

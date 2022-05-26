@@ -2,9 +2,7 @@ import time
 
 import cv2
 import os
-# from config import TEMPLATE_IMAGE_1, TEMPLATE_IMAGE_2, PATH_TO_SAVE
 import config
-# from config import table_cords_1, table_cords_2
 import lxml.etree as ET
 import cairosvg
 from models import FileIDs
@@ -246,12 +244,12 @@ async def get_colored_image(restaurant_number, tables, path_to_save, admin=False
 def test(restaurant_number, tables):
     a = time.time()
 
-    tables_busy = {i:config.addres3_first_floor[i] for i in config.addres3_first_floor if i not in tables}
+    tables_busy = {i:config.address3_first_floor[i] for i in config.address3_first_floor if i not in tables}
 
-    ids_free_1 = [config.addres3_first_floor[i][0] for i in config.addres3_first_floor if i in tables]
-    ids_free_2 = [config.addres3_first_floor[i][1] for i in config.addres3_first_floor if i in tables]
-    ids_free_3 = [config.addres3_first_floor[i][2] for i in config.addres3_first_floor if i in tables]
-    ids_free_4 = [config.addres3_first_floor[i][3] for i in config.addres3_first_floor if i in tables]
+    ids_free_1 = [config.address3_first_floor[i][0] for i in config.address3_first_floor if i in tables]
+    ids_free_2 = [config.address3_first_floor[i][1] for i in config.address3_first_floor if i in tables]
+    ids_free_3 = [config.address3_first_floor[i][2] for i in config.address3_first_floor if i in tables]
+    ids_free_4 = [config.address3_first_floor[i][3] for i in config.address3_first_floor if i in tables]
     ids_free_4 = sum(ids_free_4, [])
 
     ids_busy_1 = [tables_busy[i][0] for i in tables_busy]
