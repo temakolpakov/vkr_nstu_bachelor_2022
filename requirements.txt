@@ -1,6 +1,7 @@
 aerich==0.6.3
 aiogram==2.19
 aiohttp==3.8.1
+aiosignal==1.2.0
 aiosqlite==0.17.0
 astroid==2.11.2
 async-timeout==4.0.2
@@ -14,12 +15,14 @@ CairoSVG==2.5.2
 certifi==2021.10.8
 cffi==1.15.0
 chardet==4.0.0
+charset-normalizer==2.0.12
 click==8.1.2
 cssselect2==0.5.0
 ddlparse==1.10.0
 decorator==5.1.1
 defusedxml==0.7.1
 dictdiffer==0.9.0
+frozenlist==1.3.0
 google-auth==2.6.2
 google-auth-oauthlib==0.5.1
 gspread==5.3.0
@@ -28,7 +31,9 @@ idna==3.3
 iso8601==1.0.2
 isort==5.10.1
 jsondiff==1.3.1
+keyboard==0.13.5
 lazy-object-proxy==1.7.1
+loguru==0.6.0
 lxml==4.8.0
 mccabe==0.7.0
 multidict==6.0.2
@@ -48,11 +53,13 @@ pytz==2022.1
 requests==2.27.1
 requests-oauthlib==1.3.1
 rsa==4.8
+scipy==1.8.0
 six==1.16.0
 svgpathtools==1.4.4
 svgwrite==1.4.2
 tinycss2==1.1.1
 toml==0.10.2
+tomlkit==0.10.1
 tortoise==0.1.1
 tortoise-orm==0.19.0
 typing_extensions==4.1.1
