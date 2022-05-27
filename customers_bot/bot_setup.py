@@ -1,3 +1,5 @@
+# import os, sys
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.files import JSONStorage
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
