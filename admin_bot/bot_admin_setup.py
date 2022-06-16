@@ -1,12 +1,9 @@
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.files import JSONStorage
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import config
 from middlewares.logging_middleware import LoggingMiddleware
 from middlewares.answercallback_middleware import AnswerCallbackMiddleware
 from middlewares.onlyprivate_middleware import OnlyPrivateMiddleware
-from aiogram import types
-
 from loguru import logger
 
 fmt = "{time} - {name} - {level} - {message}"

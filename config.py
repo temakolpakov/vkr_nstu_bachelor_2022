@@ -4,15 +4,13 @@ import dotenv
 import pytz
 import ast
 
-from gspread_formatting import Color
-
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 dotenv.load_dotenv(dotenv_path)
 
 LOG_FILE = os.environ.get('LOG_FILE')
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
-restaurant_name = 'Civil'
+restaurant_name = 'Ресторан'
 
 DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')

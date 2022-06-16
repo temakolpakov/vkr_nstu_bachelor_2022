@@ -276,6 +276,7 @@ async def notificator(flag=False):
 async def reminder(flag=False):
     while True:
         now = datetime.datetime.now(tz=config.timezone)
+        # now = now.replace(day=31, hour=12, minute=15)
         date_now = now.strftime('%d.%m')
         time_now = now.strftime('%H:%M')
         time_plus_2 = now + datetime.timedelta(hours=2)
@@ -292,29 +293,29 @@ async def reminder(flag=False):
                                        time=time_plus_24.strftime('%H:%M'), reminded=None)
         for order in orders_2:
             user = await order.user
-            text = msgs.reminder.format(msgs.restaurants[order.restaurant],
+            text = msgs.reminder.format(msgs.restaurants[(await order.restaurant).id],
                                         order.date, order.time, config.PHONES[order.restaurant])
             await broadcast_sender(user.chat_id, text)
             order.reminded = True
             await order.save()
         for order in orders_6:
             user = await order.user
-            text = msgs.reminder.format(msgs.restaurants[order.restaurant],
+            text = msgs.reminder.format(msgs.restaurants[(await order.restaurant).id],
                                         order.date, order.time, config.PHONES[order.restaurant])
             await broadcast_sender(user.chat_id, text)
             order.reminded = True
             await order.save()
         for order in orders_12:
             user = await order.user
-            text = msgs.reminder.format(msgs.restaurants[order.restaurant],
+            text = msgs.reminder.format(msgs.restaurants[(await order.restaurant).id],
                                         order.date, order.time, config.PHONES[order.restaurant])
             await broadcast_sender(user.chat_id, text)
             order.reminded = True
             await order.save()
         for order in orders_24:
             user = await order.user
-            text = msgs.reminder.format(msgs.restaurants[order.restaurant],
-                                        order.date, order.time, config.PHONES[order.restaurant])
+            text = msgs.reminder.format(msgs.restaurants[(await order.restaurant).id],
+                                        order.date, order.time, config.PHONES[(await order.restaurant).id])
             await broadcast_sender(user.chat_id, text)
             order.reminded = True
             await order.save()

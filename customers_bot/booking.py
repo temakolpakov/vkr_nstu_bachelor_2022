@@ -22,20 +22,20 @@ from keyboards import ru_keyboards as kb
 # @dp.message_handler(commands='start', state='*')
 async def start(message: types.Message, state: FSMContext, back_flag=False, start_booking_again=False):
     user = await User.get_or_none(chat_id=message.chat.id)
-    if not user:
-        text = message.text
-        if len(text.split()) == 1:
-            await message.answer(msgs.its_test)
-            return
-        elif len(text.split()) == 2:
-            code = text.split()[1]
-            activation_code = await ActivationCode.get_or_none(code=code)
-            if activation_code:
-                await activation_code.delete()
-                await message.answer(msgs.test_allowed)
-            else:
-                await message.answer(msgs.wrong_code)
-                return
+    # if not user:
+    #     text = message.text
+    #     if len(text.split()) == 1:
+    #         await message.answer(msgs.its_test)
+    #         return
+    #     elif len(text.split()) == 2:
+    #         code = text.split()[1]
+    #         activation_code = await ActivationCode.get_or_none(code=code)
+    #         if activation_code:
+    #             await activation_code.delete()
+    #             await message.answer(msgs.test_allowed)
+    #         else:
+    #             await message.answer(msgs.wrong_code)
+    #             return
     if not back_flag:
         if await state.get_data() != {}:
             await state.finish()

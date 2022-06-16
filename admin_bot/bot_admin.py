@@ -3,8 +3,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from aiogram import Dispatcher
 from aiogram.types import ContentType
 from aiogram.utils import executor
-# from aiogram.contrib.middlewares.logging import LoggingMiddleware
-
 from models import *
 from states_admin import *
 from bot_admin_setup import dp

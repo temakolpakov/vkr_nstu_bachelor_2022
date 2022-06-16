@@ -1,9 +1,6 @@
 from booking import *
 from settings_handlers import *
-from buttons import ru_buttons as btns
 from messages import ru_messages as msgs
-import datetime
-
 from bot_setup import dp
 from states import *
 

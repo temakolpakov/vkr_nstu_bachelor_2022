@@ -65,7 +65,8 @@ async def del_booking_handler(query: CallbackQuery, state: FSMContext):
             now_plus_5_str = now_plus_5.strftime('%m.%d.%Y %H:%M')
             await OrderToDelete.create(order=order, datetime=now_plus_5_str)
 
-        await query.message.answer(msgs.del_booking_in_order, reply_markup=await kb.restore_order_keyboard(order))
+        msg_id = await query.message.answer(msgs.del_booking_in_order, reply_markup=await kb.restore_order_keyboard(order))
+        await set_message_id(msg_id)
         await state.finish()
     else:
         await state.finish()
